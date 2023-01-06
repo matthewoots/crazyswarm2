@@ -18,6 +18,7 @@ from crazyflie_interfaces.msg import Hover, FullState
 
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Twist
+from geometry_msgs.msg import PoseStamped
 
 from functools import partial
 
@@ -154,6 +155,18 @@ class CrazyflieServer(Node):
         # update the resulting state
         for state, (_, cf) in zip(states_next, self.cfs.items()):
             cf.setState(state)
+            pose_msg = PoseStamped()
+            self.publisher_ = self.create_publisher(
+                PoseStamped, cf.name + "/pose", 10
+            )
+            pose_msg.pose.position.x = state.pos[0]
+            pose_msg.pose.position.y = state.pos[1]
+            pose_msg.pose.position.z = state.pos[2]
+            pose_msg.pose.orientation.w = state.quat[0]
+            pose_msg.pose.orientation.x = state.quat[1]
+            pose_msg.pose.orientation.y = state.quat[2]
+            pose_msg.pose.orientation.z = state.quat[3]
+            self.publisher_.publish(pose_msg)
 
         for vis in self.visualizations:
             vis.step(self.backend.time(), states_next, states_desired, actions)
