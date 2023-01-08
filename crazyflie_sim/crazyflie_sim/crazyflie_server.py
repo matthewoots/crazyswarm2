@@ -137,8 +137,9 @@ class CrazyflieServer(Node):
 
         # step as fast as possible
         max_dt = 0.0 if "max_dt" not in self._ros_parameters["sim"] else self._ros_parameters["sim"]["max_dt"]
+        pose_dt = 0.1 if "pose_dt" not in self._ros_parameters["sim"] else self._ros_parameters["sim"]["pose_dt"] # default 10Hz
         self.timer = self.create_timer(max_dt, self._timer_callback)
-        self.timer_pub = self.create_timer(0.1, self._timer_pub)
+        self.timer_pub = self.create_timer(pose_dt, self._timer_pub)
         self.is_shutdown = False
 
     def on_shutdown_callback(self):
