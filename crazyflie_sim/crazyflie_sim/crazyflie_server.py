@@ -92,6 +92,8 @@ class CrazyflieServer(Node):
         self.create_service(GoTo, "all/go_to", self._go_to_callback)
         self.create_service(StartTrajectory, "all/start_trajectory", self._start_trajectory_callback)
 
+        self.pub_list = []
+
         for name, _ in self.cfs.items():
             self.create_service(
                 Empty, name +
@@ -129,9 +131,14 @@ class CrazyflieServer(Node):
                 "/cmd_full_state", partial(self._cmd_full_state_changed, name=name), 10
             )
 
+            self.pub_list.append(self.create_publisher(
+                PoseStamped, name + "/pose", 2)
+        )
+
         # step as fast as possible
         max_dt = 0.0 if "max_dt" not in self._ros_parameters["sim"] else self._ros_parameters["sim"]["max_dt"]
         self.timer = self.create_timer(max_dt, self._timer_callback)
+        self.timer_pub = self.create_timer(0.1, self._timer_pub)
         self.is_shutdown = False
 
     def on_shutdown_callback(self):
@@ -155,21 +162,27 @@ class CrazyflieServer(Node):
         # update the resulting state
         for state, (_, cf) in zip(states_next, self.cfs.items()):
             cf.setState(state)
-            pose_msg = PoseStamped()
-            self.publisher_ = self.create_publisher(
-                PoseStamped, cf.name + "/pose", 10
-            )
-            pose_msg.pose.position.x = state.pos[0]
-            pose_msg.pose.position.y = state.pos[1]
-            pose_msg.pose.position.z = state.pos[2]
-            pose_msg.pose.orientation.w = state.quat[0]
-            pose_msg.pose.orientation.x = state.quat[1]
-            pose_msg.pose.orientation.y = state.quat[2]
-            pose_msg.pose.orientation.z = state.quat[3]
-            self.publisher_.publish(pose_msg)
 
         for vis in self.visualizations:
             vis.step(self.backend.time(), states_next, states_desired, actions)
+
+    def _timer_pub(self):
+        for publisher_, (_, cf) in zip(self.pub_list, self.cfs.items()):
+            self._pub_state(publisher_, cf.state)
+    
+    def _pub_state(self, publisher_, state):
+        pose_msg = PoseStamped()
+
+        pose_msg.pose.position.x = state.position.x
+        pose_msg.pose.position.y = state.position.y
+        pose_msg.pose.position.z = state.position.z
+        pose_msg.pose.orientation.w = state.attitudeQuaternion.w
+        pose_msg.pose.orientation.x = state.attitudeQuaternion.x
+        pose_msg.pose.orientation.y = state.attitudeQuaternion.y
+        pose_msg.pose.orientation.z = state.attitudeQuaternion.z
+
+        publisher_.publish(pose_msg)
+        return
 
     def _param_to_dict(self, param_ros):
         """
