@@ -1,10 +1,10 @@
 # named list of all robots
 robots:
-  cf231:
-    enabled: true
-    uri: radio://0/80/2M/E7E7E7E7E7
-    initial_position: [0, 0, 0]
-    type: cf21  # see robot_types
+  # cf231:
+  #   enabled: true
+  #   uri: radio://0/80/2M/E7E7E7E7E7
+  #   initial_position: [0, 0, 0]
+  #   type: cf21  # see robot_types
     # firmware_params:
     #   kalman:
     #     pNAcc_xy: 1.0 # default 0.5
@@ -14,11 +14,153 @@ robots:
     #     topic_name3: 
     #       frequency: 1
     #       vars: ["acc.x", "acc.y"]
-  cf5:
-    enabled: false
-    uri: radio://0/80/2M/E7E7E7E705
-    initial_position: [0, -0.5, 0]
+  cf1:
+    enabled: true
+    uri: radio://0/80/2M/E7E7E7E701
+    initial_position: [-0.5, -0.5, 0]
+    # initial_position: [0.0, 0.0, 0]
     type: cf21  # see robot_types
+    ip_add: "192.168.31.111"
+    port: 5000
+  cf2:
+    enabled: true
+    uri: radio://0/80/2M/E7E7E7E702
+    initial_position: [-0.5, 0.0, 0]
+    # initial_position: [0.0, 0.0, 0]
+    nina_ip: 192.168.0.2
+    nina_port: 5002
+    type: cf21  # see robot_types
+  # cf3:
+  #   enabled: true
+  #   uri: radio://0/80/2M/E7E7E7E703
+  #   initial_position: [-0.5, 0.5, 0]
+  #   # initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf4:
+  #   enabled: true
+  #   uri: radio://0/80/2M/E7E7E7E704
+  #   initial_position: [0.0, -0.5, 0]
+  #   # initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf5:
+  #   enabled: true
+  #   uri: radio://0/80/2M/E7E7E7E705
+  #   initial_position: [0.0, 0.0, 0]
+  #   # initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf6:
+  #   enabled: true
+  #   uri: radio://0/80/2M/E7E7E7E706
+  #   # initial_position: [0.0, 0.5, 0]
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf7:
+  #   enabled: true
+  #   uri: radio://0/80/2M/E7E7E7E707
+  #   # initial_position: [0.5, -0.5, 0]
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf8:
+  #   enabled: true
+  #   uri: radio://0/80/2M/E7E7E7E708
+  #   # initial_position: [0.5, 0.0, 0]
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  
+  # cf9:
+  #   enabled: true
+  #   uri: radio://1/100/2M/E7E7E7E709
+  #   # initial_position: [0.5, 0.5, 0]
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  
+  # cf10:
+  #   enabled: true
+  #   uri: radio://1/100/2M/E7E7E7E710
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf11:
+  #   enabled: true
+  #   uri: radio://1/100/2M/E7E7E7E711
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf12:
+  #   enabled: true
+  #   uri: radio://1/100/2M/E7E7E7E712
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf13:
+  #   enabled: true
+  #   uri: radio://1/100/2M/E7E7E7E713
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf14:
+  #   enabled: true
+  #   uri: radio://1/100/2M/E7E7E7E714
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf15:
+  #   enabled: true
+  #   uri: radio://1/100/2M/E7E7E7E715
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf16:
+  #   enabled: true
+  #   uri: radio://1/100/2M/E7E7E7E716
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+
+  # cf17:
+  #   enabled: true
+  #   uri: radio://2/120/2M/E7E7E7E717
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf18:
+  #   enabled: true
+  #   uri: radio://2/120/2M/E7E7E7E718
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf19:
+  #   enabled: true
+  #   uri: radio://2/120/2M/E7E7E7E719
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf20:
+  #   enabled: true
+  #   uri: radio://2/120/2M/E7E7E7E720
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf21:
+  #   enabled: true
+  #   uri: radio://2/120/2M/E7E7E7E721
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf22:
+  #   enabled: true
+  #   uri: radio://2/120/2M/E7E7E7E722
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf23:
+  #   enabled: true
+  #   uri: radio://2/120/2M/E7E7E7E723
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf24:
+  #   enabled: true
+  #   uri: radio://2/120/2M/E7E7E7E724
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  # cf25:
+  #   enabled: true
+  #   uri: radio://2/120/2M/E7E7E7E725
+  #   initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+    # firmware_logging:
+    #   enabled: true
+    #   default_topics:
+    #     pose:
+    #       frequency: 1 # Hz
+
     # firmware_params:
     #   kalman:
     #     pNAcc_xy: 1.0 # default 0.5
@@ -42,11 +184,11 @@ robot_types:
     # firmware_params:
     #   kalman:
     #     pNAcc_xy: 1.0 # default 0.5
-    #firmware_logging:
+    # firmware_logging:
     #   enabled: true
     #   default_topics:
-    #   pose:
-    #     frequency: 1 # Hz
+    #     pose:
+    #       frequency: 1 # Hz
     #   custom_topics:
     #    topic_name3: 
     #      frequency: 1
@@ -72,11 +214,11 @@ all:
   # firmware logging for all drones (use robot_types/type_name to set per type, or
   # robots/drone_name to set per drone)
   firmware_logging:
-    enabled: false
+    enabled: true
     default_topics:
      # remove to disable default topic
       pose:
-        frequency: 10 # Hz
+        frequency: 5 # Hz
     #custom_topics:
     #  topic_name1:
     #    frequency: 10 # Hz
@@ -91,7 +233,7 @@ all:
       enHighLevel: 1
     stabilizer:
       estimator: 2 # 1: complementary, 2: kalman
-      controller: 2 # 1: PID, 2: mellinger
+      controller: 1 # 1: PID, 2: mellinger
     # ring:
     #   effect: 16 # 6: double spinner, 7: solid color, 16: packetRate
     #   solidBlue: 255 # if set to solid color
@@ -103,6 +245,14 @@ all:
       extQuatStdDev: 0.5e-1
     # kalman:
     #   resetEstimation: 1
+      # robustTdoa: 1
+      # pNAcc_xy: 0.5
+      # pNVel: 0.5
+      # mNGyro_rollpitch: 0.05
+      # mNGyro_yaw: 0.05
+    motion:
+      adaptive: 1
+      flowStdFixed: 2.0
   broadcasts:
     num_repeats: 15 # number of times broadcast commands are repeated
     delay_between_repeats_ms: 1 # delay in milliseconds between individual repeats

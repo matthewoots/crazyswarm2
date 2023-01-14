@@ -11,9 +11,12 @@
 #include "crazyflie_interfaces/srv/takeoff.hpp"
 #include "crazyflie_interfaces/srv/land.hpp"
 #include "crazyflie_interfaces/srv/go_to.hpp"
+#include "crazyflie_interfaces/srv/go_to_velocity.hpp"
 #include "crazyflie_interfaces/srv/notify_setpoints_stop.hpp"
+#include "crazyflie_interfaces/srv/set_group_mask.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "crazyflie_interfaces/srv/upload_trajectory.hpp"
@@ -29,8 +32,10 @@ using crazyflie_interfaces::srv::StartTrajectory;
 using crazyflie_interfaces::srv::Takeoff;
 using crazyflie_interfaces::srv::Land;
 using crazyflie_interfaces::srv::GoTo;
+using crazyflie_interfaces::srv::GoToVelocity;
 using crazyflie_interfaces::srv::UploadTrajectory;
 using crazyflie_interfaces::srv::NotifySetpointsStop;
+using crazyflie_interfaces::srv::SetGroupMask;
 using std_srvs::srv::Empty;
 
 using motion_capture_tracking_interfaces::msg::NamedPoseArray;
@@ -91,6 +96,9 @@ private:
     float x;
     float y;
     float z;
+    float vx;
+    float vy;
+    float vz;
     int32_t quatCompressed;
   } __attribute__((packed));
 
@@ -125,6 +133,8 @@ public:
     service_go_to_ = node->create_service<GoTo>(name + "/go_to", std::bind(&CrazyflieROS::go_to, this, _1, _2));
     service_upload_trajectory_ = node->create_service<UploadTrajectory>(name + "/upload_trajectory", std::bind(&CrazyflieROS::upload_trajectory, this, _1, _2));
     service_notify_setpoints_stop_ = node->create_service<NotifySetpointsStop>(name + "/notify_setpoints_stop", std::bind(&CrazyflieROS::notify_setpoints_stop, this, _1, _2));
+    service_set_group_mask_ = node->create_service<SetGroupMask>(name + "/set_group_mask", std::bind(&CrazyflieROS::set_group_mask, this, _1, _2));
+    service_go_to_velocity_ = node->create_service<GoToVelocity>(name + "/go_to_velocity", std::bind(&CrazyflieROS::go_to_velocity, this, _1, _2));
 
     subscription_cmd_vel_legacy_ = node->create_subscription<geometry_msgs::msg::Twist>(name + "/cmd_vel_legacy", rclcpp::SystemDefaultsQoS(), std::bind(&CrazyflieROS::cmd_vel_legacy_changed, this, _1));
     subscription_cmd_full_state_ = node->create_subscription<crazyflie_interfaces::msg::FullState>(name + "/cmd_full_state", rclcpp::SystemDefaultsQoS(), std::bind(&CrazyflieROS::cmd_full_state_changed, this, _1));
@@ -258,6 +268,7 @@ public:
             RCLCPP_INFO(logger_, "Logging to /pose at %d Hz", freq);
 
             publisher_pose_ = node->create_publisher<geometry_msgs::msg::PoseStamped>(name + "/pose", 10);
+            publisher_vel_ = node->create_publisher<geometry_msgs::msg::Point>(name + "/vel", 10);
 
             std::function<void(uint32_t, const logPose*)> cb = std::bind(&CrazyflieROS::on_logging_pose, this, std::placeholders::_1, std::placeholders::_2);
 
@@ -266,6 +277,9 @@ public:
                 {"stateEstimate", "x"},
                 {"stateEstimate", "y"},
                 {"stateEstimate", "z"},
+                {"stateEstimate", "vx"},
+                {"stateEstimate", "vy"},
+                {"stateEstimate", "vz"},
                 {"stateEstimateZ", "quat"}
               }, cb));
             log_block_pose_->start(uint8_t(100.0f / (float)freq)); // this is in tens of milliseconds
@@ -453,6 +467,16 @@ private:
               request->relative, request->group_mask);
   }
 
+  void go_to_velocity(const std::shared_ptr<GoToVelocity::Request> request,
+             std::shared_ptr<GoToVelocity::Response> response)
+  {
+    RCLCPP_INFO(logger_, "go_to_velocity(goal_vel=%f,%f,%f m, yaw_rate=%f rad)",
+                request->goal_vel.x, request->goal_vel.y, request->goal_vel.z, 
+                request->yaw_rate);
+    cf_.sendVelocityWorldSetpoint(request->goal_vel.x, request->goal_vel.y, request->goal_vel.z, 
+                request->yaw_rate);
+  }
+
   void upload_trajectory(const std::shared_ptr<UploadTrajectory::Request> request,
                         std::shared_ptr<UploadTrajectory::Response> response)
   {
@@ -491,6 +515,15 @@ private:
                 request->group_mask);
 
     cf_.notifySetpointsStop(request->remain_valid_millisecs);
+  }
+
+  void set_group_mask(const std::shared_ptr<SetGroupMask::Request> request,
+    std::shared_ptr<SetGroupMask::Response> response)
+  {
+    RCLCPP_INFO(logger_, "set_group_mask(group_mask%d)",
+                request->group_mask);
+
+    cf_.setGroupMask(request->group_mask);
   }
 
   // void on_parameter_changed(const rclcpp::Parameter &p)
@@ -564,6 +597,13 @@ private:
       msg.pose.position.x = data->x;
       msg.pose.position.y = data->y;
       msg.pose.position.z = data->z;
+
+      geometry_msgs::msg::Point msg_vel;
+      msg_vel.x = data->vx;
+      msg_vel.y = data->vy;
+      msg_vel.z = data->vz;
+
+      publisher_vel_->publish(msg_vel);
 
       float q[4];
       quatdecompress(data->quatCompressed, q);
@@ -648,8 +688,10 @@ private:
   rclcpp::Service<Takeoff>::SharedPtr service_takeoff_;
   rclcpp::Service<Land>::SharedPtr service_land_;
   rclcpp::Service<GoTo>::SharedPtr service_go_to_;
+  rclcpp::Service<GoToVelocity>::SharedPtr service_go_to_velocity_;
   rclcpp::Service<UploadTrajectory>::SharedPtr service_upload_trajectory_;
   rclcpp::Service<NotifySetpointsStop>::SharedPtr service_notify_setpoints_stop_;
+  rclcpp::Service<SetGroupMask>::SharedPtr service_set_group_mask_;
 
   std::shared_ptr<rclcpp::ParameterEventHandler> param_subscriber_;
   std::shared_ptr<rclcpp::ParameterEventCallbackHandle> cb_handle_;
@@ -662,6 +704,7 @@ private:
   // logging
   std::unique_ptr<LogBlock<logPose>> log_block_pose_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr publisher_pose_;
+  rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr publisher_vel_;
 
   std::unique_ptr<LogBlock<logScan>> log_block_scan_;
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher_scan_;
@@ -726,6 +769,22 @@ public:
           }
 
           update_name_to_id_map(name, crazyflies_.back()->id());
+
+          std::vector<double> init_pose_vect = 
+            parameter_overrides.at("robots." + name + ".initial_position").get<std::vector<double>>();
+          
+          std::vector<CrazyflieBroadcaster::externalPosition> ext_pos_vect;
+          CrazyflieBroadcaster::externalPosition ext_pos;
+          ext_pos.id = crazyflies_.back()->id();
+          ext_pos.x = (float)init_pose_vect[0];
+          ext_pos.y = (float)init_pose_vect[1];
+          ext_pos.z = (float)init_pose_vect[2];
+
+          ext_pos_vect.push_back(ext_pos);
+
+          auto cfbc = broadcaster_.find(broadcastUri);
+
+          cfbc->second->sendExternalPositions(ext_pos_vect);
         }
         else if (constr == "none") {
           // we still might want to track this object, so update our map

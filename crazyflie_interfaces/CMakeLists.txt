@@ -26,6 +26,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/TrajectoryPolynomialPiece.msg"
   "msg/VelocityWorld.msg"
   "srv/GoTo.srv"
+  "srv/GoToVelocity.srv"
   "srv/Land.srv"
   "srv/NotifySetpointsStop.srv"
   "srv/SetGroupMask.srv"

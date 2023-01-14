@@ -159,6 +159,7 @@ class CrazyflieServer(Node):
 
         # execute the physics simulator
         states_next = self.backend.step(states_desired, actions)
+        # print(states_desired[0].pos, " ", states_next[0].pos)
 
         # update the resulting state
         for state, (_, cf) in zip(states_next, self.cfs.items()):
