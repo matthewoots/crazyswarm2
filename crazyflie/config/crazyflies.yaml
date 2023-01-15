@@ -20,15 +20,11 @@ robots:
     initial_position: [-0.5, -0.5, 0]
     # initial_position: [0.0, 0.0, 0]
     type: cf21  # see robot_types
-    ip_add: "192.168.31.111"
-    port: 5000
   cf2:
     enabled: true
     uri: radio://0/80/2M/E7E7E7E702
     initial_position: [-0.5, 0.0, 0]
     # initial_position: [0.0, 0.0, 0]
-    nina_ip: 192.168.0.2
-    nina_port: 5002
     type: cf21  # see robot_types
   # cf3:
   #   enabled: true
