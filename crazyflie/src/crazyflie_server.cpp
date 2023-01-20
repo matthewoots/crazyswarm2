@@ -11,7 +11,6 @@
 #include "crazyflie_interfaces/srv/takeoff.hpp"
 #include "crazyflie_interfaces/srv/land.hpp"
 #include "crazyflie_interfaces/srv/go_to.hpp"
-#include "crazyflie_interfaces/srv/go_to_velocity.hpp"
 #include "crazyflie_interfaces/srv/notify_setpoints_stop.hpp"
 #include "crazyflie_interfaces/srv/set_group_mask.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -24,6 +23,7 @@
 #include "crazyflie_interfaces/msg/full_state.hpp"
 #include "crazyflie_interfaces/msg/position.hpp"
 #include "crazyflie_interfaces/msg/log_data_generic.hpp"
+#include "crazyflie_interfaces/msg/velocity_world.hpp"
 
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -32,7 +32,6 @@ using crazyflie_interfaces::srv::StartTrajectory;
 using crazyflie_interfaces::srv::Takeoff;
 using crazyflie_interfaces::srv::Land;
 using crazyflie_interfaces::srv::GoTo;
-using crazyflie_interfaces::srv::GoToVelocity;
 using crazyflie_interfaces::srv::UploadTrajectory;
 using crazyflie_interfaces::srv::NotifySetpointsStop;
 using crazyflie_interfaces::srv::SetGroupMask;
@@ -96,9 +95,9 @@ private:
     float x;
     float y;
     float z;
-    float vx;
-    float vy;
-    float vz;
+    // float vx;
+    // float vy;
+    // float vz;
     int32_t quatCompressed;
   } __attribute__((packed));
 
@@ -134,11 +133,11 @@ public:
     service_upload_trajectory_ = node->create_service<UploadTrajectory>(name + "/upload_trajectory", std::bind(&CrazyflieROS::upload_trajectory, this, _1, _2));
     service_notify_setpoints_stop_ = node->create_service<NotifySetpointsStop>(name + "/notify_setpoints_stop", std::bind(&CrazyflieROS::notify_setpoints_stop, this, _1, _2));
     service_set_group_mask_ = node->create_service<SetGroupMask>(name + "/set_group_mask", std::bind(&CrazyflieROS::set_group_mask, this, _1, _2));
-    service_go_to_velocity_ = node->create_service<GoToVelocity>(name + "/go_to_velocity", std::bind(&CrazyflieROS::go_to_velocity, this, _1, _2));
 
     subscription_cmd_vel_legacy_ = node->create_subscription<geometry_msgs::msg::Twist>(name + "/cmd_vel_legacy", rclcpp::SystemDefaultsQoS(), std::bind(&CrazyflieROS::cmd_vel_legacy_changed, this, _1));
     subscription_cmd_full_state_ = node->create_subscription<crazyflie_interfaces::msg::FullState>(name + "/cmd_full_state", rclcpp::SystemDefaultsQoS(), std::bind(&CrazyflieROS::cmd_full_state_changed, this, _1));
     subscription_cmd_position_ = node->create_subscription<crazyflie_interfaces::msg::Position>(name + "/cmd_position", rclcpp::SystemDefaultsQoS(), std::bind(&CrazyflieROS::cmd_position_changed, this, _1));
+    subscription_cmd_velocity_world_ = node->create_subscription<crazyflie_interfaces::msg::VelocityWorld>(name + "/cmd_velocity_world", rclcpp::SystemDefaultsQoS(), std::bind(&CrazyflieROS::cmd_velocity_world_setpoint, this, _1));
 
     auto start = std::chrono::system_clock::now();
 
@@ -277,9 +276,9 @@ public:
                 {"stateEstimate", "x"},
                 {"stateEstimate", "y"},
                 {"stateEstimate", "z"},
-                {"stateEstimate", "vx"},
-                {"stateEstimate", "vy"},
-                {"stateEstimate", "vz"},
+                // {"stateEstimate", "vx"},
+                // {"stateEstimate", "vy"},
+                // {"stateEstimate", "vz"},
                 {"stateEstimateZ", "quat"}
               }, cb));
             log_block_pose_->start(uint8_t(100.0f / (float)freq)); // this is in tens of milliseconds
@@ -399,6 +398,19 @@ private:
     cf_.sendSetpoint(roll, pitch, yawrate, thrust);
   }
 
+  void cmd_velocity_world_setpoint(const crazyflie_interfaces::msg::VelocityWorld::SharedPtr msg)
+  {
+      float x = msg->vel.x;
+      float y = msg->vel.y;
+      float z = msg->vel.z;
+
+      float height = msg->height;
+      
+      float yaw = msg->yaw;
+
+      cf_.sendVelocityWorldSetpoint(x, y, z, height, yaw);
+  }
+
   void on_console(const char *msg)
   {
     message_buffer_ += msg;
@@ -465,16 +477,6 @@ private:
     cf_.goTo(request->goal.x, request->goal.y, request->goal.z, request->yaw, 
               rclcpp::Duration(request->duration).seconds(),
               request->relative, request->group_mask);
-  }
-
-  void go_to_velocity(const std::shared_ptr<GoToVelocity::Request> request,
-             std::shared_ptr<GoToVelocity::Response> response)
-  {
-    RCLCPP_INFO(logger_, "go_to_velocity(goal_vel=%f,%f,%f m, yaw_rate=%f rad)",
-                request->goal_vel.x, request->goal_vel.y, request->goal_vel.z, 
-                request->yaw_rate);
-    cf_.sendVelocityWorldSetpoint(request->goal_vel.x, request->goal_vel.y, request->goal_vel.z, 
-                request->yaw_rate);
   }
 
   void upload_trajectory(const std::shared_ptr<UploadTrajectory::Request> request,
@@ -598,12 +600,12 @@ private:
       msg.pose.position.y = data->y;
       msg.pose.position.z = data->z;
 
-      geometry_msgs::msg::Point msg_vel;
-      msg_vel.x = data->vx;
-      msg_vel.y = data->vy;
-      msg_vel.z = data->vz;
+      // geometry_msgs::msg::Point msg_vel;
+      // msg_vel.x = data->vx;
+      // msg_vel.y = data->vy;
+      // msg_vel.z = data->vz;
 
-      publisher_vel_->publish(msg_vel);
+      // publisher_vel_->publish(msg_vel);
 
       float q[4];
       quatdecompress(data->quatCompressed, q);
@@ -688,7 +690,6 @@ private:
   rclcpp::Service<Takeoff>::SharedPtr service_takeoff_;
   rclcpp::Service<Land>::SharedPtr service_land_;
   rclcpp::Service<GoTo>::SharedPtr service_go_to_;
-  rclcpp::Service<GoToVelocity>::SharedPtr service_go_to_velocity_;
   rclcpp::Service<UploadTrajectory>::SharedPtr service_upload_trajectory_;
   rclcpp::Service<NotifySetpointsStop>::SharedPtr service_notify_setpoints_stop_;
   rclcpp::Service<SetGroupMask>::SharedPtr service_set_group_mask_;
@@ -700,6 +701,7 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr subscription_cmd_vel_legacy_;
   rclcpp::Subscription<crazyflie_interfaces::msg::FullState>::SharedPtr subscription_cmd_full_state_;
   rclcpp::Subscription<crazyflie_interfaces::msg::Position>::SharedPtr subscription_cmd_position_;
+  rclcpp::Subscription<crazyflie_interfaces::msg::VelocityWorld>::SharedPtr subscription_cmd_velocity_world_;
 
   // logging
   std::unique_ptr<LogBlock<logPose>> log_block_pose_;

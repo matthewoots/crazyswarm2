@@ -14,7 +14,7 @@ import importlib
 
 from crazyflie_interfaces.srv import Takeoff, Land, GoTo
 from crazyflie_interfaces.srv import UploadTrajectory, StartTrajectory, NotifySetpointsStop
-from crazyflie_interfaces.msg import Hover, FullState
+from crazyflie_interfaces.msg import Hover, FullState, VelocityWorld
 
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Twist
@@ -121,6 +121,10 @@ class CrazyflieServer(Node):
             self.create_subscription(
                 Twist, name +
                 "/cmd_vel_legacy", partial(self._cmd_vel_legacy_changed, name=name), 10
+            )
+            self.create_subscription(
+                VelocityWorld, name +
+                "/cmd_velocity_world", partial(self._cmd_velocity_world, name=name), 10
             )
             self.create_subscription(
                 Hover, name +
@@ -315,6 +319,14 @@ class CrazyflieServer(Node):
         """
         self.get_logger().info("cmd_vel_legacy not yet implemented")
 
+    def _cmd_velocity_world(self, msg, name=""):
+        """
+        Topic update callback to control velocity of the crazyflie
+        """
+        # Same as going through crtp decoder
+        cfs = self.cfs if name == "all" else {name: self.cfs[name]}
+        for _, cf in cfs.items():
+            cf.velocityDecoder(msg.vel.x, msg.vel.y, msg.vel.z, msg.height, msg.yaw)
 
     def _cmd_hover_changed(self, msg, name=""):
         """

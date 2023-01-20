@@ -3,7 +3,7 @@
     # simulation related
     sim:
       max_dt: 0 #0.1              # artificially limit the step() function (set to 0 to disable)
-      pose_dt: 0
+      pose_dt: 0.3
       backend: np                 # see backend folder for a list 
       visualizations:             # see visualization folder for a list
         - rviz

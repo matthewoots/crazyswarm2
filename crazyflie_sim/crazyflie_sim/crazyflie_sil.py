@@ -56,6 +56,8 @@ class CrazyflieSIL:
         self.cmdHl_vel = firm.vzero()
         self.cmdHl_yaw = 0
 
+        self.low_setpoint = firm.setpoint_t()
+
         # current setpoint
         self.setpoint = firm.setpoint_t()
 
@@ -105,7 +107,8 @@ class CrazyflieSIL:
     def takeoff(self, targetHeight, duration, groupMask = 0):
         if self._isGroup(groupMask):
             self.mode = CrazyflieSIL.MODE_HIGH_POLY
-            targetYaw = 0.0
+            targetYaw = np.radians(self.state.attitude.yaw)
+            # targetYaw = 0.0
             firm.plan_takeoff(self.planner,
                 self.cmdHl_pos,
                 self.cmdHl_yaw, targetHeight, targetYaw, duration, self.time_func())
@@ -113,7 +116,8 @@ class CrazyflieSIL:
     def land(self, targetHeight, duration, groupMask = 0):
         if self._isGroup(groupMask):
             self.mode = CrazyflieSIL.MODE_HIGH_POLY
-            targetYaw = 0.0
+            targetYaw = np.radians(self.state.attitude.yaw)
+            # targetYaw = 0.0
             firm.plan_land(self.planner,
                 self.cmdHl_pos,
                 self.cmdHl_yaw, targetHeight, targetYaw, duration, self.time_func())
@@ -125,9 +129,9 @@ class CrazyflieSIL:
 
     def goTo(self, goal, yaw, duration, relative = False, groupMask = 0):
         if self._isGroup(groupMask):
-            if self.mode != CrazyflieSIL.MODE_HIGH_POLY:
+            # if self.mode != CrazyflieSIL.MODE_HIGH_POLY:
                 # We need to update to the latest firmware that has go_to_from.
-                raise ValueError("goTo from low-level modes not yet supported.")
+                # raise ValueError("goTo from low-level modes not yet supported.")
             self.mode = CrazyflieSIL.MODE_HIGH_POLY
             firm.plan_go_to(self.planner, relative, firm.mkvec(*goal), yaw, duration, self.time_func())
 
@@ -183,6 +187,22 @@ class CrazyflieSIL:
     #     self.setState.omega = firm.mkvec(0.0, 0.0, yawRate)
     #     # TODO: should we set pos, acc, yaw to zero, or rely on modes to not read them?
 
+    def velocityDecoder(self, vx, vy, vz, height, yaw):
+        self.mode = CrazyflieSIL.MODE_LOW_VELOCITY
+        # self.low_setpoint = firm.setpoint_t()
+        self.low_setpoint.velocity.x = vx
+        self.low_setpoint.velocity.y = vy
+        self.low_setpoint.velocity.z = vz
+
+        self.low_setpoint.position.z = height
+        
+        self.low_setpoint.mode.x = firm.modeVelocity
+        self.low_setpoint.mode.y = firm.modeVelocity
+        self.low_setpoint.mode.z = firm.modeAbs
+        
+        self.low_setpoint.mode.yaw = firm.modeAbs
+        self.low_setpoint.attitude.yaw = yaw
+
     # def cmdStop(self):
     #     # TODO: set mode to MODE_IDLE?
     #     pass
@@ -216,7 +236,15 @@ class CrazyflieSIL:
                 self.cmdHl_pos = copy_svec(ev.pos)
                 self.cmdHl_vel = copy_svec(ev.vel)
                 self.cmdHl_yaw = ev.yaw
-
+        
+        elif self.mode == CrazyflieSIL.MODE_LOW_VELOCITY:
+            self.setpoint = self.low_setpoint
+            pos = firm.mkvec(self.state.position.x, self.state.position.y, self.state.position.z)
+            vel = firm.mkvec(self.state.velocity.x, self.state.velocity.y, self.state.velocity.z)
+            self.cmdHl_pos = copy_svec(pos)
+            self.cmdHl_vel = copy_svec(vel)
+            self.cmdHl_yaw = self.state.attitude.yaw
+        
         return self._fwsetpoint_to_sim_data_types_state(self.setpoint)
 
         # # else:
@@ -262,8 +290,8 @@ class CrazyflieSIL:
         if self.controller is None:
             return None
 
-        if self.mode != CrazyflieSIL.MODE_HIGH_POLY:
-            return sim_data_types.Action([0,0,0,0])
+        # if self.mode != CrazyflieSIL.MODE_HIGH_POLY:
+        #     return sim_data_types.Action([0,0,0,0])
 
         time_in_seconds = self.time_func()
         # ticks is essentially the time in milliseconds as an integer
