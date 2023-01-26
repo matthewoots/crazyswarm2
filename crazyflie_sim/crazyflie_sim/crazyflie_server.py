@@ -20,6 +20,8 @@ from std_srvs.srv import Empty
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseStamped
 
+import numpy as np
+
 from functools import partial
 
 # import BackendRviz from .backend_rviz
@@ -93,6 +95,7 @@ class CrazyflieServer(Node):
         self.create_service(StartTrajectory, "all/start_trajectory", self._start_trajectory_callback)
 
         self.pub_list = []
+        self.pub_vel_list = []
 
         for name, _ in self.cfs.items():
             self.create_service(
@@ -136,14 +139,15 @@ class CrazyflieServer(Node):
             )
 
             self.pub_list.append(self.create_publisher(
-                PoseStamped, name + "/pose", 2)
-        )
+                PoseStamped, name + "/pose", 2))
+            self.pub_vel_list.append(self.create_publisher(
+                Twist, name + "/vel", 2))
 
         # step as fast as possible
         max_dt = 0.0 if "max_dt" not in self._ros_parameters["sim"] else self._ros_parameters["sim"]["max_dt"]
-        pose_dt = 0.1 if "pose_dt" not in self._ros_parameters["sim"] else self._ros_parameters["sim"]["pose_dt"] # default 10Hz
+        state_pub_dt = 0.1 if "state_pub_dt" not in self._ros_parameters["sim"] else self._ros_parameters["sim"]["state_pub_dt"] # default 10Hz
         self.timer = self.create_timer(max_dt, self._timer_callback)
-        self.timer_pub = self.create_timer(pose_dt, self._timer_pub)
+        self.timer_pub = self.create_timer(state_pub_dt, self._timer_pub)
         self.is_shutdown = False
 
     def on_shutdown_callback(self):
@@ -173,21 +177,35 @@ class CrazyflieServer(Node):
             vis.step(self.backend.time(), states_next, states_desired, actions)
 
     def _timer_pub(self):
-        for publisher_, (_, cf) in zip(self.pub_list, self.cfs.items()):
-            self._pub_state(publisher_, cf.state)
+        for pos_publisher_, vel_publisher_, (_, cf) in zip(self.pub_list, self.pub_vel_list, self.cfs.items()):
+            self._pub_state(pos_publisher_, vel_publisher_, cf.state)
     
-    def _pub_state(self, publisher_, state):
+    def _pub_state(self, pos_publisher_, vel_publisher_, state):
         pose_msg = PoseStamped()
+        twist_msg = Twist()
+        mu, sigma = 0, 0.05
+        # creating a noise with the same dimension as the dataset (1,3) 
+        noise = np.random.normal(mu, sigma, [3]) 
 
-        pose_msg.pose.position.x = state.position.x
-        pose_msg.pose.position.y = state.position.y
-        pose_msg.pose.position.z = state.position.z
+        pose_msg.pose.position.x = state.position.x + float(noise[0])
+        pose_msg.pose.position.y = state.position.y + float(noise[1])
+        pose_msg.pose.position.z = state.position.z + float(noise[2])
+
+        twist_msg.linear.x = state.velocity.x
+        twist_msg.linear.y = state.velocity.y
+        twist_msg.linear.z = state.velocity.z
+
         pose_msg.pose.orientation.w = state.attitudeQuaternion.w
         pose_msg.pose.orientation.x = state.attitudeQuaternion.x
         pose_msg.pose.orientation.y = state.attitudeQuaternion.y
         pose_msg.pose.orientation.z = state.attitudeQuaternion.z
 
-        publisher_.publish(pose_msg)
+        twist_msg.angular.x = state.attitude.roll
+        twist_msg.angular.y = state.attitude.pitch
+        twist_msg.angular.z = state.attitude.yaw        
+
+        pos_publisher_.publish(pose_msg)
+        vel_publisher_.publish(twist_msg)
         return
 
     def _param_to_dict(self, param_ros):

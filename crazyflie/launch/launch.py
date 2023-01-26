@@ -57,6 +57,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument('backend', default_value='cpp'),
+        DeclareLaunchArgument('rviz', default_value='show'),
         Node(
             package='motion_capture_tracking',
             executable='motion_capture_tracking_node',
@@ -113,6 +114,7 @@ def generate_launch_description():
             package='rviz2',
             namespace='',
             executable='rviz2',
+            condition=LaunchConfigurationEquals('rviz','show'),
             name='rviz2',
             arguments=['-d' + os.path.join(get_package_share_directory('crazyflie'), 'config', 'config.rviz')],
             parameters=[{
