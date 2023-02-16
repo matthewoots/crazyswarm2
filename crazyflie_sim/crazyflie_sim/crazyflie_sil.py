@@ -199,7 +199,11 @@ class CrazyflieSIL:
         self.low_setpoint.mode.x = firm.modeVelocity
         self.low_setpoint.mode.y = firm.modeVelocity
         self.low_setpoint.mode.z = firm.modeAbs
-        
+
+        self.low_setpoint.mode.quat = firm.modeDisable
+
+        self.low_setpoint.mode.roll = firm.modeDisable
+        self.low_setpoint.mode.pitch = firm.modeDisable
         self.low_setpoint.mode.yaw = firm.modeAbs
         self.low_setpoint.attitude.yaw = yaw
 
@@ -241,6 +245,11 @@ class CrazyflieSIL:
             self.setpoint = self.low_setpoint
             pos = firm.mkvec(self.state.position.x, self.state.position.y, self.state.position.z)
             vel = firm.mkvec(self.state.velocity.x, self.state.velocity.y, self.state.velocity.z)
+            
+            self.setpoint.acceleration.x = self.setpoint.velocity.x - self.state.velocity.x
+            self.setpoint.acceleration.y = self.setpoint.velocity.y - self.state.velocity.y
+            self.setpoint.acceleration.z = self.setpoint.velocity.z - self.state.velocity.z
+            
             self.cmdHl_pos = copy_svec(pos)
             self.cmdHl_vel = copy_svec(vel)
             self.cmdHl_yaw = self.state.attitude.yaw

@@ -183,7 +183,8 @@ class CrazyflieServer(Node):
     def _pub_state(self, pos_publisher_, vel_publisher_, state):
         pose_msg = PoseStamped()
         twist_msg = Twist()
-        mu, sigma = 0, 0.05
+        pose_msg.header.stamp = self.get_clock().now().to_msg()
+        mu, sigma = 0, 0.001
         # creating a noise with the same dimension as the dataset (1,3) 
         noise = np.random.normal(mu, sigma, [3]) 
 

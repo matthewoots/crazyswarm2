@@ -20,24 +20,27 @@ robots:
     initial_position: [-0.5, -0.5, 0]
     # initial_position: [0.0, 0.0, 0]
     type: cf21  # see robot_types
-    ip_add: "192.168.4.1"
+    mission_capable: true
+    ip_add: "192.168.31.101"
     port: 5000
-  cf2:
-    enabled: true
-    uri: radio://0/80/2M/E7E7E7E702
-    initial_position: [-0.5, 0.0, 0]
-    # initial_position: [0.0, 0.0, 0]
-    type: cf21  # see robot_types
-    ip_add: "192.168.4.1"
-    port: 5000
-  cf3:
-    enabled: true
-    uri: radio://0/80/2M/E7E7E7E703
-    initial_position: [-0.5, 0.5, 0]
-    # initial_position: [0.0, 0.0, 0]
-    type: cf21  # see robot_types
-    ip_add: "192.168.4.1"
-    port: 5000
+  # cf2:
+  #   enabled: true
+  #   uri: radio://0/80/2M/E7E7E7E702
+  #   initial_position: [-0.5, 0.0, 0]
+  #   # initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  #   mission_capable: true
+  #   ip_add: "192.168.4.1"
+  #   port: 5000
+  # cf3:
+  #   enabled: true
+  #   uri: radio://0/80/2M/E7E7E7E703
+  #   initial_position: [-0.5, 0.5, 0]
+  #   # initial_position: [0.0, 0.0, 0]
+  #   type: cf21  # see robot_types
+  #   mission_capable: true
+  #   ip_add: "192.168.4.1"
+  #   port: 5000
   # cf4:
   #   enabled: true
   #   uri: radio://0/80/2M/E7E7E7E704
@@ -130,18 +133,30 @@ robots:
   # cf20:
   #   enabled: true
   #   uri: radio://2/120/2M/E7E7E7E720
-  #   initial_position: [0.0, 0.0, 0]
+  #   initial_position: [1.0, 0.0, 0]
   #   type: cf21  # see robot_types
+  #   # initial_position: [0.0, 0.0, 0]
+  #   mission_capable: false
+  #   ip_add: "192.168.4.1"
+  #   port: 5000
   # cf21:
   #   enabled: true
   #   uri: radio://2/120/2M/E7E7E7E721
-  #   initial_position: [0.0, 0.0, 0]
+  #   initial_position: [0.0, 1.0, 0]
   #   type: cf21  # see robot_types
+  #   # initial_position: [0.0, 0.0, 0]
+  #   mission_capable: false
+  #   ip_add: "192.168.4.1"
+  #   port: 5000
   # cf22:
   #   enabled: true
   #   uri: radio://2/120/2M/E7E7E7E722
-  #   initial_position: [0.0, 0.0, 0]
+  #   initial_position: [1.0, 1.0, 0]
   #   type: cf21  # see robot_types
+  #   # initial_position: [0.0, 0.0, 0]
+  #   mission_capable: false
+  #   ip_add: "192.168.4.1"
+  #   port: 5000
   # cf23:
   #   enabled: true
   #   uri: radio://2/120/2M/E7E7E7E723
@@ -220,7 +235,7 @@ all:
     default_topics:
      # remove to disable default topic
       pose:
-        frequency: 5 # Hz
+        frequency: 4 # Hz
     # custom_topics:
     #  topic_name1:
     #    frequency: 10 # Hz
