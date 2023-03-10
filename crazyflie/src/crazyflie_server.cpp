@@ -95,10 +95,13 @@ private:
     float x;
     float y;
     float z;
-    // float vx;
-    // float vy;
-    // float vz;
     int32_t quatCompressed;
+  } __attribute__((packed));
+
+  struct logVel {
+    float vx;
+    float vy;
+    float vz;
   } __attribute__((packed));
 
   struct logScan {
@@ -264,24 +267,31 @@ public:
           // check if any of the default topics are enabled
           if (i.first.find("default_topics.pose") == 0) {
             int freq = log_config_map["default_topics.pose.frequency"].get<int>();
-            RCLCPP_INFO(logger_, "Logging to /pose at %d Hz", freq);
+            RCLCPP_INFO(logger_, "Logging to /pose and /vel at %d Hz", freq);
 
             publisher_pose_ = node->create_publisher<geometry_msgs::msg::PoseStamped>(name + "/pose", 10);
             publisher_vel_ = node->create_publisher<geometry_msgs::msg::Point>(name + "/vel", 10);
 
-            std::function<void(uint32_t, const logPose*)> cb = std::bind(&CrazyflieROS::on_logging_pose, this, std::placeholders::_1, std::placeholders::_2);
+            std::function<void(uint32_t, const logPose*)> cb_pose = std::bind(&CrazyflieROS::on_logging_pose, this, std::placeholders::_1, std::placeholders::_2);
+            std::function<void(uint32_t, const logVel*)> cb_vel = std::bind(&CrazyflieROS::on_logging_vel, this, std::placeholders::_1, std::placeholders::_2);
 
             log_block_pose_.reset(new LogBlock<logPose>(
               &cf_,{
                 {"stateEstimate", "x"},
                 {"stateEstimate", "y"},
                 {"stateEstimate", "z"},
-                // {"stateEstimate", "vx"},
-                // {"stateEstimate", "vy"},
-                // {"stateEstimate", "vz"},
                 {"stateEstimateZ", "quat"}
-              }, cb));
+              }, cb_pose));
+          
+            log_block_vel_.reset(new LogBlock<logVel>(
+              &cf_,{
+                {"stateEstimate", "vx"},
+                {"stateEstimate", "vy"},
+                {"stateEstimate", "vz"}
+              }, cb_vel));
+
             log_block_pose_->start(uint8_t(100.0f / (float)freq)); // this is in tens of milliseconds
+            log_block_vel_->start(uint8_t(100.0f / (float)freq)); // this is in tens of milliseconds
           }
           else if (i.first.find("default_topics.scan") == 0) {
             int freq = log_config_map["default_topics.scan.frequency"].get<int>();
@@ -631,6 +641,17 @@ private:
     }
   }
 
+  void on_logging_vel(uint32_t time_in_ms, const logVel* data) {
+    if (publisher_vel_) {
+      geometry_msgs::msg::Point msg_vel;
+      msg_vel.x = data->vx;
+      msg_vel.y = data->vy;
+      msg_vel.z = data->vz;
+
+      publisher_vel_->publish(msg_vel);
+    }
+  }
+
   void on_logging_scan(uint32_t time_in_ms, const logScan* data) {
     if (publisher_scan_) {
       
@@ -705,6 +726,7 @@ private:
 
   // logging
   std::unique_ptr<LogBlock<logPose>> log_block_pose_;
+  std::unique_ptr<LogBlock<logVel>> log_block_vel_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr publisher_pose_;
   rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr publisher_vel_;
 
