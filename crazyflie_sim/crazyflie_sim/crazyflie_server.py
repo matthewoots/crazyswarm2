@@ -9,6 +9,8 @@ A crazyflie server for simulation.
 
 import rclpy
 from rclpy.node import Node
+import time
+import math
 import rowan
 import importlib
 
@@ -50,9 +52,13 @@ class CrazyflieServer(Node):
             pass
         robot_data = self._ros_parameters["robots"]
 
+        self.compensation = 1
+        self.max_compensation = self._ros_parameters["sim"]["maximum_compensation"]
+
         # Parse robots
         names = []
         initial_states = []
+        offset = self._ros_parameters["offset_agents"]
         for cfname in robot_data:
             if robot_data[cfname]["enabled"]:
                 type_cf = robot_data[cfname]["type"]
@@ -61,6 +67,9 @@ class CrazyflieServer(Node):
                 if connection == "crazyflie":
                     names.append(cfname)
                     pos = robot_data[cfname]["initial_position"]
+                    pos = robot_data[cfname]["initial_position"]
+                    pos[0] += offset[0]
+                    pos[1] += offset[1]
                     initial_states.append(State(pos))
 
         # initialize backend by dynamically loading the module
@@ -159,15 +168,18 @@ class CrazyflieServer(Node):
             self.is_shutdown = True
 
     def _timer_callback(self):
+
+        start = time.time()
+
         # update setpoint
         states_desired = [cf.getSetpoint() for _, cf in self.cfs.items()]
-
-        # execute the control loop
-        actions = [cf.executeController()  for _, cf in self.cfs.items()]
-
+    
         # execute the physics simulator
-        states_next = self.backend.step(states_desired, actions)
-        # print(states_desired[0].pos, " ", states_next[0].pos)
+        for x in range(self.compensation):
+            # execute the control loop
+            actions = [cf.executeController()  for _, cf in self.cfs.items()]
+            states_next = self.backend.step(states_desired, actions)
+            # print(states_desired[0].pos, " ", states_next[0].pos)
 
         # update the resulting state
         for state, (_, cf) in zip(states_next, self.cfs.items()):
@@ -175,6 +187,16 @@ class CrazyflieServer(Node):
 
         for vis in self.visualizations:
             vis.step(self.backend.time(), states_next, states_desired, actions)
+        
+        end = time.time()
+        # update dt
+        self.update_step_counts((end - start))
+
+        # print(str((end - start)*1000) + "ms " + str(self.compensation) + " " + str((end - start)/self.backend.dt))
+
+    def update_step_counts(self, dt):
+        self.compensation = max(min(
+                math.ceil((dt - self.backend.dt) / self.backend.dt), self.max_compensation),1)
 
     def _timer_pub(self):
         for pos_publisher_, vel_publisher_, (_, cf) in zip(self.pub_list, self.pub_vel_list, self.cfs.items()):

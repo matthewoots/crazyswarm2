@@ -23,11 +23,20 @@ def generate_launch_description():
         get_package_share_directory('crazyflie'),
         'config',
         'server.yaml')
+    
+    # load swarm_manager parameters
+    config_yaml = os.path.join(
+        get_package_share_directory('crazyswarm_application'),
+        'launch',
+        'config.yaml')
+    
+    with open(config_yaml, 'r') as ymlfile:
+        config = yaml.safe_load(ymlfile)
 
     with open(server_yaml, 'r') as ymlfile:
         server_yaml_contents = yaml.safe_load(ymlfile)
 
-    server_params = [crazyflies] + [server_yaml_contents["/crazyflie_server"]["ros__parameters"]]
+    server_params = [crazyflies] + [server_yaml_contents["/crazyflie_server"]["ros__parameters"]] + [config]
 
     # construct motion_capture_configuration
     motion_capture_yaml = os.path.join(
@@ -38,16 +47,16 @@ def generate_launch_description():
     with open(motion_capture_yaml, 'r') as ymlfile:
         motion_capture = yaml.safe_load(ymlfile)
 
-    motion_capture_params = motion_capture["/motion_capture_tracking"]["ros__parameters"]
-    motion_capture_params["rigid_bodies"] = dict()
-    for key, value in crazyflies["robots"].items():
-        type = crazyflies["robot_types"][value["type"]]
-        if value["enabled"] and type["motion_capture"]["enabled"]:
-            motion_capture_params["rigid_bodies"][key] =  {
-                    "initial_position": value["initial_position"],
-                    "marker": type["motion_capture"]["marker"],
-                    "dynamics": type["motion_capture"]["dynamics"],
-                }
+    # motion_capture_params = motion_capture["/motion_capture_tracking"]["ros__parameters"]
+    # motion_capture_params["rigid_bodies"] = dict()
+    # for key, value in crazyflies["robots"].items():
+    #     type = crazyflies["robot_types"][value["type"]]
+    #     if value["enabled"] and type["motion_capture"]["enabled"]:
+    #         motion_capture_params["rigid_bodies"][key] =  {
+    #                 "initial_position": value["initial_position"],
+    #                 "marker": type["motion_capture"]["marker"],
+    #                 "dynamics": type["motion_capture"]["dynamics"],
+    #             }
 
     # teleop params
     teleop_params = os.path.join(
@@ -58,14 +67,14 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('backend', default_value='cpp'),
         DeclareLaunchArgument('rviz', default_value='show'),
-        Node(
-            package='motion_capture_tracking',
-            executable='motion_capture_tracking_node',
-            condition=LaunchConfigurationNotEquals('backend','sim'),
-            name='motion_capture_tracking',
-            output='screen',
-            parameters=[motion_capture_params]
-        ),
+        # Node(
+        #     package='motion_capture_tracking',
+        #     executable='motion_capture_tracking_node',
+        #     condition=LaunchConfigurationNotEquals('backend','sim'),
+        #     name='motion_capture_tracking',
+        #     output='screen',
+        #     parameters=[motion_capture_params]
+        # ),
         Node(
             package='crazyflie',
             executable='teleop',

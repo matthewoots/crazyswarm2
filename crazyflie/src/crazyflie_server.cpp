@@ -19,7 +19,7 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "crazyflie_interfaces/srv/upload_trajectory.hpp"
-#include "motion_capture_tracking_interfaces/msg/named_pose_array.hpp"
+#include "crazyswarm_application/msg/named_pose_array.hpp"
 #include "crazyflie_interfaces/msg/full_state.hpp"
 #include "crazyflie_interfaces/msg/position.hpp"
 #include "crazyflie_interfaces/msg/log_data_generic.hpp"
@@ -37,7 +37,7 @@ using crazyflie_interfaces::srv::NotifySetpointsStop;
 using crazyflie_interfaces::srv::SetGroupMask;
 using std_srvs::srv::Empty;
 
-using motion_capture_tracking_interfaces::msg::NamedPoseArray;
+using crazyswarm_application::msg::NamedPoseArray;
 using crazyflie_interfaces::msg::FullState;
 
 // Helper class to convert crazyflie_cpp logging messages to ROS logging messages
@@ -825,6 +825,7 @@ public:
 
     auto cf_names = extract_names(parameter_overrides, "robots");
     for (const auto &name : cf_names) {
+      RCLCPP_INFO(logger_, "next cf ......");
       bool enabled = parameter_overrides.at("robots." + name + ".enabled").get<bool>();
       if (enabled) {
         // Lookup type
@@ -839,15 +840,21 @@ public:
         // if it is a Crazyflie, try to connect
         if (constr == "crazyflie") {
           std::string uri = parameter_overrides.at("robots." + name + ".uri").get<std::string>();
+          RCLCPP_INFO(logger_, "constr %s", constr.c_str());
           crazyflies_.emplace(name, std::make_unique<CrazyflieROS>(uri, cf_type, name, this));
-
+          
+          RCLCPP_INFO(logger_, "trying to get broadcastUri ......");
           auto broadcastUri = crazyflies_[name]->broadcastUri();
           RCLCPP_INFO(logger_, "%s", broadcastUri.c_str());
           if (broadcaster_.count(broadcastUri) == 0) {
+            RCLCPP_INFO(logger_, "emplace here");
             broadcaster_.emplace(broadcastUri, std::make_unique<CrazyflieBroadcaster>(broadcastUri));
           }
+          RCLCPP_INFO(logger_, "update broadcast_uri");
 
           update_name_to_id_map(name, crazyflies_[name]->id());
+
+          RCLCPP_INFO(logger_, "update_name_to_id_map");
         }
         else if (constr == "none") {
           // we still might want to track this object, so update our map
@@ -866,6 +873,7 @@ public:
   void spin_some()
   {
     for (auto& cf : crazyflies_) {
+      // printf("ping %s\n", cf.first.c_str());
       cf.second->spin_some();
     }
   }
@@ -886,9 +894,11 @@ public:
         parameter_overrides.at("robots." + cf.second->get_name() + ".initial_position").get<std::vector<double>>();
       std::vector<double> initial_quat = 
         parameter_overrides.at("robots." + cf.second->get_name() + ".initial_quaternion").get<std::vector<double>>();
-      
+      std::vector<double> offset = 
+        parameter_overrides.at("offset_agents").get<std::vector<double>>();
+
       data_pose.push_back({cf.second->id(), 
-        (float)initial_pos[0], (float)initial_pos[1], (float)initial_pos[2],
+        (float)initial_pos[0] + (float)offset[0], (float)initial_pos[1] + (float)offset[1], (float)initial_pos[2],
         (float)initial_quat[0], (float)initial_quat[1], (float)initial_quat[2], (float)initial_quat[3],
         0.000001f, 0.000001f});
 

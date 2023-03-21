@@ -26,16 +26,16 @@ def generate_launch_description():
     with open(motion_capture_yaml, 'r') as ymlfile:
         motion_capture = yaml.safe_load(ymlfile)
 
-    motion_capture_params = motion_capture["/motion_capture_tracking"]["ros__parameters"]
-    motion_capture_params["rigid_bodies"] = dict()
-    for key, value in crazyflies["robots"].items():
-        type = crazyflies["robot_types"][value["type"]]
+    # motion_capture_params = motion_capture["/motion_capture_tracking"]["ros__parameters"]
+    # motion_capture_params["rigid_bodies"] = dict()
+    # for key, value in crazyflies["robots"].items():
+    #     type = crazyflies["robot_types"][value["type"]]
         
-        motion_capture_params["rigid_bodies"][key] =  {
-                "initial_position": value["initial_position"],
-                "marker": type["marker"],
-                "dynamics": type["dynamics"],
-            }
+    #     motion_capture_params["rigid_bodies"][key] =  {
+    #             "initial_position": value["initial_position"],
+    #             "marker": type["marker"],
+    #             "dynamics": type["dynamics"],
+    #         }
 
     # teleop params
     teleop_params = os.path.join(
@@ -48,13 +48,13 @@ def generate_launch_description():
         'teleop_5.yaml')
     
     return LaunchDescription([
-        Node(
-            package='motion_capture_tracking',
-            executable='motion_capture_tracking_node',
-            name='motion_capture_tracking',
-            output='screen',
-            parameters=[motion_capture_params]
-        ),
+        # Node(
+        #     package='motion_capture_tracking',
+        #     executable='motion_capture_tracking_node',
+        #     name='motion_capture_tracking',
+        #     output='screen',
+        #     parameters=[motion_capture_params]
+        # ),
         Node(
             package='crazyflie',
             executable='teleop',
