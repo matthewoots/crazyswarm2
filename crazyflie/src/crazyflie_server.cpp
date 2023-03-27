@@ -492,6 +492,7 @@ private:
             std::shared_ptr<Empty::Response> response)
   {
     RCLCPP_INFO(logger_, "emergency()");
+    failure_detection = true;
     cf_.emergencyStop();
   }
 
@@ -656,7 +657,7 @@ private:
   // }
 
   void on_logging_pose(uint32_t time_in_ms, const logPose* data) {
-    if (publisher_pose_) {
+    if (publisher_pose_ && !failure_detection) {
       geometry_msgs::msg::PoseStamped msg;
       msg.header.stamp = node_->get_clock()->now();
       msg.header.frame_id = "world";
@@ -758,6 +759,8 @@ private:
   std::string message_buffer_;
   std::string name_;
 
+  bool failure_detection = false;
+
   rclcpp::Node* node_;
   tf2_ros::TransformBroadcaster tf_broadcaster_;
 
@@ -825,7 +828,6 @@ public:
 
     auto cf_names = extract_names(parameter_overrides, "robots");
     for (const auto &name : cf_names) {
-      RCLCPP_INFO(logger_, "next cf ......");
       bool enabled = parameter_overrides.at("robots." + name + ".enabled").get<bool>();
       if (enabled) {
         // Lookup type
@@ -840,21 +842,15 @@ public:
         // if it is a Crazyflie, try to connect
         if (constr == "crazyflie") {
           std::string uri = parameter_overrides.at("robots." + name + ".uri").get<std::string>();
-          RCLCPP_INFO(logger_, "constr %s", constr.c_str());
           crazyflies_.emplace(name, std::make_unique<CrazyflieROS>(uri, cf_type, name, this));
-          
-          RCLCPP_INFO(logger_, "trying to get broadcastUri ......");
+
           auto broadcastUri = crazyflies_[name]->broadcastUri();
           RCLCPP_INFO(logger_, "%s", broadcastUri.c_str());
           if (broadcaster_.count(broadcastUri) == 0) {
-            RCLCPP_INFO(logger_, "emplace here");
             broadcaster_.emplace(broadcastUri, std::make_unique<CrazyflieBroadcaster>(broadcastUri));
           }
-          RCLCPP_INFO(logger_, "update broadcast_uri");
 
           update_name_to_id_map(name, crazyflies_[name]->id());
-
-          RCLCPP_INFO(logger_, "update_name_to_id_map");
         }
         else if (constr == "none") {
           // we still might want to track this object, so update our map
@@ -873,7 +869,6 @@ public:
   void spin_some()
   {
     for (auto& cf : crazyflies_) {
-      // printf("ping %s\n", cf.first.c_str());
       cf.second->spin_some();
     }
   }
@@ -1094,6 +1089,9 @@ private:
     }
   }
 
+  public:
+    int init_count = 0;
+
   private:
     rclcpp::Logger logger_;
 
@@ -1129,13 +1127,26 @@ int main(int argc, char *argv[])
 
   // rclcpp::spin(std::make_shared<CrazyflieServer>());
   auto node = std::make_shared<CrazyflieServer>();
-  node->set_initial_poses();
+  
+  // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // node->set_initial_poses();
+  // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // node->set_initial_poses();
+  // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // node->set_initial_poses();
+  // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  
   while (true)
   {
     node->spin_some();
     rclcpp::spin_some(node);
     
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    if (node->init_count < 100)
+    {
+      node->set_initial_poses();
+      node->init_count++;
+    }
   }
   rclcpp::shutdown();
   return 0;

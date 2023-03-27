@@ -120,7 +120,7 @@ class CrazyflieSIL:
             # targetYaw = 0.0
             firm.plan_land(self.planner,
                 self.cmdHl_pos,
-                self.cmdHl_yaw, targetHeight, targetYaw, duration, self.time_func())
+                np.radians(self.state.attitude.yaw), targetHeight, targetYaw, duration, self.time_func())
 
     # def stop(self, groupMask = 0):
     #     if self._isGroup(groupMask):
@@ -252,7 +252,8 @@ class CrazyflieSIL:
             
             self.cmdHl_pos = copy_svec(pos)
             self.cmdHl_vel = copy_svec(vel)
-            self.cmdHl_yaw = self.state.attitude.yaw
+            # self.cmdHl_yaw = self.state.attitude.yaw
+            self.cmdHl_yaw = self.setpoint.attitude.yaw
         
         return self._fwsetpoint_to_sim_data_types_state(self.setpoint)
 
