@@ -25,16 +25,16 @@ robots:
     mission_capable: true
     ip_add: "192.168.1.101"
     port: 5000
-  # cf2:
-  #   enabled: true
-  #   uri: radio://0/80/2M/E7E7E7E702
-  #   initial_position: [1.133, 0.375, 0.0]
-  #   # initial_position: [0.0, 0.0, 0]
-  #   initial_quaternion: [0.0, 0.0, 0.0, 1.0]
-  #   type: cf21  # see robot_types
-  #   mission_capable: true
-  #   ip_add: "192.168.1.102"
-  #   port: 5000
+  cf2:
+    enabled: true
+    uri: radio://0/80/2M/E7E7E7E702
+    initial_position: [1.133, 0.375, 0.0]
+    # initial_position: [0.0, 0.0, 0]
+    initial_quaternion: [0.0, 0.0, 0.0, 1.0]
+    type: cf21  # see robot_types
+    mission_capable: true
+    ip_add: "192.168.1.102"
+    port: 5000
   # cf3:
   #   enabled: true
   #   uri: radio://0/80/2M/E7E7E7E703
@@ -134,6 +134,7 @@ robots:
   #   port: 5000
   # cf12:
   #   enabled: true
+  #   # uri: radio://0/100/2M/E7E7E7E712
   #   uri: radio://1/100/2M/E7E7E7E712
   #   initial_position: [-0.3835, -1.125, 0.0]
   #   # initial_position: [0.0, 0.0, 0]
@@ -144,6 +145,7 @@ robots:
   #   port: 5000
   # cf13:
   #   enabled: true
+  #   # uri: radio://0/120/2M/E7E7E7E713
   #   uri: radio://2/120/2M/E7E7E7E713
   #   initial_position: [-1.133, 1.125, 0.0]
   #   # initial_position: [0.0, 0.0, 0]
@@ -154,6 +156,7 @@ robots:
   #   port: 5000
   # cf14:
   #   enabled: true
+  #   # uri: radio://0/120/2M/E7E7E7E714
   #   uri: radio://2/120/2M/E7E7E7E714
   #   initial_position: [-1.133, 0.375, 0.0]
   #   # initial_position: [0.0, 0.0, 0]
@@ -164,6 +167,7 @@ robots:
   #   port: 5000
   # cf15:
   #   enabled: true
+  #   # uri: radio://0/120/2M/E7E7E7E715
   #   uri: radio://2/120/2M/E7E7E7E715
   #   initial_position: [-1.133, -0.375, 0.0]
   #   # initial_position: [0.0, 0.0, 0]
@@ -174,6 +178,7 @@ robots:
   #   port: 5000
   # cf16:
   #   enabled: true
+  #   # uri: radio://0/120/2M/E7E7E7E716
   #   uri: radio://2/120/2M/E7E7E7E716
   #   initial_position: [-1.133, -1.125, 0.0]
   #   # initial_position: [0.0, 0.0, 0]
@@ -185,6 +190,7 @@ robots:
 
   # cf17:
   #   enabled: true
+  #   # uri: radio://0/120/2M/E7E7E7E717
   #   uri: radio://2/120/2M/E7E7E7E717
   #   initial_position: [-2.585, 1.125, 0]
   #   # initial_position: [0.0, 0.0, 0]
@@ -195,6 +201,7 @@ robots:
   #   port: 5000
   # cf18:
   #   enabled: true
+  #   # uri: radio://0/120/2M/E7E7E7E718
   #   uri: radio://2/120/2M/E7E7E7E718
   #   # initial_position: [-0.5, 0.5, 0]
   #   initial_position: [-2.585, 0.375, 0]
@@ -205,7 +212,8 @@ robots:
   #   port: 5000
   # cf19:
   #   enabled: true
-  #   uri: radio://3/60/2M/E7E7E7E719
+  #   uri: radio://0/60/2M/E7E7E7E719
+  #   # uri: radio://3/60/2M/E7E7E7E719
   #   initial_position: [-2.585, -0.375, 0]
   #   # initial_position: [0.0, 0.0, 0]
   #   initial_quaternion: [0.0, 0.0, 0.0, 1.0]
@@ -215,6 +223,7 @@ robots:
   #   port: 5000
   # cf20:
   #   enabled: true
+  #   # uri: radio://0/60/2M/E7E7E7E720
   #   uri: radio://3/60/2M/E7E7E7E720
   #   initial_position: [-2.585, -1.125, 0]
   #   type: cf21  # see robot_types
@@ -225,6 +234,7 @@ robots:
   #   port: 5000
   # cf21:
   #   enabled: true
+  #   # uri: radio://0/60/2M/E7E7E7E721
   #   uri: radio://3/60/2M/E7E7E7E721
   #   initial_position: [-3.335, 1.125, 0]
   #   type: cf21  # see robot_types
@@ -235,6 +245,7 @@ robots:
   #   port: 5000
   # cf22:
   #   enabled: true
+  #   # uri: radio://0/60/2M/E7E7E7E722
   #   uri: radio://3/60/2M/E7E7E7E722
   #   initial_position: [-3.335, 0.375, 0]
   #   initial_quaternion: [0.0, 0.0, 0.0, 1.0]
@@ -244,6 +255,7 @@ robots:
   #   port: 5000
   # cf23:
   #   enabled: true
+  #   # uri: radio://0/60/2M/E7E7E7E723
   #   uri: radio://3/60/2M/E7E7E7E723
   #   initial_position: [-3.335, -0.375, 0]
   #   initial_quaternion: [0.0, 0.0, 0.0, 1.0]
@@ -358,14 +370,20 @@ all:
     locSrv:
       # extPosStdDev: 1.1e-1
       # extQuatStdDev: 5.0e-2
-      extPosStdDev: 1.0
-      extQuatStdDev: 1.0
+      extPosStdDev: 5.0e-1
+      extQuatStdDev: 2.0e-1
     kalman:
       resetEstimation: 1
+      heightThreshold: 0.075
+      reboundThreshold: 0.35
+      heightLeniency: 3
     #   pNAcc_xy: 0.02
     #   pNVel: 0.02
     #   mNGyro_rollpitch: 0.001
     #   mNGyro_yaw: 0.001
+    velCtlPid:
+      vxKp: 18.0
+      vyKp: 18.0
     motion:
       adaptive: 1
       flowStdFixed: 0.1
