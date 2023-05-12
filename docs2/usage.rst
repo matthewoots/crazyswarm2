@@ -4,7 +4,7 @@ Usage
 =====
 
 .. warning::
-    Do not forget to source your ROS2 workspace in each terminal you would like to use it
+    Do not forget to source your ROS 2 workspace in each terminal you would like to use it
 
     .. code-block:: bash
 
@@ -130,16 +130,16 @@ Example:
 Physical Experiments
 --------------------
 
-ROS2 terminal
-~~~~~~~~~~~~~
+ROS 2 terminal
+~~~~~~~~~~~~~~
 
 The following shows a simple take off and land example without any launch files or yaml files
 
 .. code-block:: bash
 
     ros2 run crazyflie reboot --uri radio://0/80/2M/E7E7E7E706 --mode sysoff
-    ros2 param set crazyflie cf1/params/commander/enHighLevel 1
-    ros2 param set crazyflie cf1/params/stabilizer/estimator 2
+    ros2 param set crazyflie_server cf1.params.commander.enHighLevel 1
+    ros2 param set crazyflie_server cf1.params.stabilizer.estimator 2
     ros2 service call cf1/takeoff crazyflie_interfaces/srv/Takeoff "{height: 0.5, duration: {sec: 2}}"
     ros2 service call cf1/land crazyflie_interfaces/srv/Land "{height: 0.0, duration: {sec: 2}}"
 
@@ -165,7 +165,7 @@ In another terminal after sourcing the right setup.bash files, run:
     ros2 service call /cf2/add_logging crazyflie_interfaces/srv/AddLogging "{topic_name: 'topic_test', frequency: 10, vars: ['stateEstimate.x','stateEstimate.y','stateEstimate.z']}"
     ros2 service call /cf2/add_logging crazyflie_interfaces/srv/AddLogging "{topic_name: 'pose', frequency: 10}
 
-With ROS2's rqt you can look at the topics, or with 'ROS2 topics echo /cf2/pose'
+With ROS 2's rqt you can look at the topics, or with 'ROS 2 topics echo /cf2/pose'
 
 To close the logblocks again, run:
 

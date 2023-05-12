@@ -51,7 +51,7 @@ class CrazyflieServer(Node):
         except KeyError:
             pass
         robot_data = self._ros_parameters["robots"]
-
+        
         self.compensation = 1
         self.max_compensation = self._ros_parameters["sim"]["maximum_compensation"]
 
@@ -67,7 +67,6 @@ class CrazyflieServer(Node):
                 if connection == "crazyflie":
                     names.append(cfname)
                     pos = robot_data[cfname]["initial_position"]
-                    pos = robot_data[cfname]["initial_position"]
                     pos[0] += offset[0]
                     pos[1] += offset[1]
                     initial_states.append(State(pos))
@@ -80,11 +79,12 @@ class CrazyflieServer(Node):
 
         # initialize visualizations by dynamically loading the modules
         self.visualizations = []
-        for vis_name in self._ros_parameters["sim"]["visualizations"]:
-            module = importlib.import_module(".visualization." + vis_name, package="crazyflie_sim")
-            class_ = getattr(module, "Visualization")
-            vis = class_(self, names, initial_states)
-            self.visualizations.append(vis)
+        for vis_key in self._ros_parameters["sim"]["visualizations"]:
+            if self._ros_parameters["sim"]["visualizations"][vis_key]["enabled"]:
+                module = importlib.import_module(".visualization." + str(vis_key), package="crazyflie_sim")
+                class_ = getattr(module, "Visualization")
+                vis = class_(self, self._ros_parameters["sim"]["visualizations"][vis_key], names, initial_states)
+                self.visualizations.append(vis)
 
         controller_name = backend_name = self._ros_parameters["sim"]["controller"]
 
@@ -102,7 +102,7 @@ class CrazyflieServer(Node):
         self.create_service(Land, "all/land", self._land_callback)
         self.create_service(GoTo, "all/go_to", self._go_to_callback)
         self.create_service(StartTrajectory, "all/start_trajectory", self._start_trajectory_callback)
-
+        
         self.pub_list = []
         self.pub_vel_list = []
 
@@ -146,7 +146,7 @@ class CrazyflieServer(Node):
                 FullState, name +
                 "/cmd_full_state", partial(self._cmd_full_state_changed, name=name), 10
             )
-
+            
             self.pub_list.append(self.create_publisher(
                 PoseStamped, name + "/pose", 2))
             self.pub_vel_list.append(self.create_publisher(
@@ -168,13 +168,13 @@ class CrazyflieServer(Node):
             self.is_shutdown = True
 
     def _timer_callback(self):
-
+        
         start = time.time()
 
         # update setpoint
         states_desired = [cf.getSetpoint() for _, cf in self.cfs.items()]
-    
-        # execute the physics simulator
+
+         # execute the physics simulator
         for x in range(self.compensation):
             # execute the control loop
             actions = [cf.executeController()  for _, cf in self.cfs.items()]
@@ -187,13 +187,13 @@ class CrazyflieServer(Node):
 
         for vis in self.visualizations:
             vis.step(self.backend.time(), states_next, states_desired, actions)
-        
+            
         end = time.time()
         # update dt
         self.update_step_counts((end - start))
 
         # print(str((end - start)*1000) + "ms " + str(self.compensation) + " " + str((end - start)/self.backend.dt))
-
+    
     def update_step_counts(self, dt):
         self.compensation = max(min(
                 math.ceil((dt - self.backend.dt) / self.backend.dt), self.max_compensation),1)
@@ -233,7 +233,7 @@ class CrazyflieServer(Node):
 
     def _param_to_dict(self, param_ros):
         """
-        Turn ROS2 parameters from the node into a dict
+        Turn ROS 2 parameters from the node into a dict
         """
         tree = {}
         for item in param_ros:
@@ -359,7 +359,7 @@ class CrazyflieServer(Node):
             of the crazyflie with teleop
         """
         self.get_logger().info("cmd_vel_legacy not yet implemented")
-
+    
     def _cmd_velocity_world(self, msg, name=""):
         """
         Topic update callback to control velocity of the crazyflie

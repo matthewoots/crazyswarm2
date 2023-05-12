@@ -6,7 +6,7 @@ Installation
 Crazyswarm2 runs on **Ubuntu Linux** in one of the following configurations:
 
 ====== ======== ========
-Ubuntu Python   ROS2
+Ubuntu Python   ROS 2
 ------ -------- --------
 20.04  3.7, 3.8 Galactic
 22.04  3.10     Humble
@@ -22,7 +22,7 @@ Ubuntu Python   ROS2
 First Installation
 ------------------
 
-1. If needed, install ROS2 using the instructions at https://docs.ros.org/en/galactic/Installation.html or https://docs.ros.org/en/humble/Installation.html.
+1. If needed, install ROS 2 using the instructions at https://docs.ros.org/en/galactic/Installation.html or https://docs.ros.org/en/humble/Installation.html.
 
 2. Install dependencies
 
@@ -38,7 +38,7 @@ First Installation
         pip3 install cflib transforms3d
         sudo apt-get install ros-*DISTRO*-tf-transformations
 
-3. Set up your ROS2 workspace
+3. Set up your ROS 2 workspace
 
     .. code-block:: bash
 
@@ -47,7 +47,7 @@ First Installation
         git clone https://github.com/IMRCLab/crazyswarm2 --recursive
         git clone --branch ros2 --recursive https://github.com/IMRCLab/motion_capture_tracking.git
 
-4. Build your ROS2 workspace
+4. Build your ROS 2 workspace
 
     .. code-block:: bash
 
@@ -59,17 +59,19 @@ First Installation
 
 5. Set up software-in-the-loop simulation (optional)
 
-    This currently requires cloning the Crazyflie firmware and building the Python bindings manually. In a separate folder (not part of your ROS2 workspace!), 
+    This currently requires cloning the Crazyflie firmware and building the Python bindings manually. In a separate folder (not part of your ROS 2 workspace!), 
 
     .. code-block:: bash
 
-        git clone https://github.com/bitcraze/crazyflie-firmware.git
+        git clone --recursive https://github.com/bitcraze/crazyflie-firmware.git
 
     First follow `the instructions to build the python bindings <https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/building-and-flashing/build/#build-python-bindings>`_ from the bitcraze website. Afterwards, make sure that the bindings can be found in the python path:
 
     .. code-block:: bash
 
-        export PYTHONPATH=<replace-with-path-to>/crazyflie-firmware:$PYTHONPATH
+        export PYTHONPATH=<replace-with-path-to>/crazyflie-firmware/build:$PYTHONPATH
+        
+    If you are working from an older version of the crazyflie-firmware (before tag 2023.02), then you will need to point to main folder of the repo by removing the '/build' part. 
 
 
 Updating
