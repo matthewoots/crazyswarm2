@@ -26,7 +26,7 @@ from crazyflie_interfaces.srv import UploadTrajectory, StartTrajectory, NotifySe
 from rcl_interfaces.msg import ParameterDescriptor, SetParametersResult, ParameterType
 from crazyflie_interfaces.msg import Hover
 from crazyflie_interfaces.msg import LogDataGeneric
-from motion_capture_tracking_interfaces.msg import NamedPoseArray
+#from motion_capture_tracking_interfaces.msg import NamedPoseArray
 
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Twist

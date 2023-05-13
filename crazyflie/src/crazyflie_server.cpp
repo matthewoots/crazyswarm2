@@ -20,7 +20,7 @@
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "crazyflie_interfaces/srv/upload_trajectory.hpp"
 #include "crazyswarm_application/msg/named_pose_array.hpp"
-#include "motion_capture_tracking_interfaces/msg/named_pose_array.hpp"
+//#include "motion_capture_tracking_interfaces/msg/named_pose_array.hpp"
 #include "crazyflie_interfaces/msg/full_state.hpp"
 #include "crazyflie_interfaces/msg/position.hpp"
 #include "crazyflie_interfaces/msg/log_data_generic.hpp"
