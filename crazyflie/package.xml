@@ -3,7 +3,7 @@
 <package format="3">
   <name>crazyflie</name>
   <version>2.0.0</version>
-  <description>ROS2 Package for Bitcraze Crazyflie robots</description>
+  <description>ROS 2 Package for Bitcraze Crazyflie robots</description>
   <maintainer email="hoenig@tu-berlin.de">Wolfgang Hönig, Kimberly McGuire</maintainer>
   <license>MIT</license>
 
@@ -17,6 +17,7 @@
   <depend>crazyflie_interfaces</depend>
   <depend>geometry_msgs</depend>
   <depend>crazyswarm_application</depend>
+  <!--<depend>motion_capture_tracking_interfaces</depend>-->
 
   <exec_depend>tf_transformations</exec_depend>
 

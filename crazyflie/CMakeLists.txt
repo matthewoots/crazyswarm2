@@ -16,6 +16,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(crazyflie_interfaces REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(crazyswarm_application REQUIRED)
+#find_package(motion_capture_tracking_interfaces REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 # add dependencies
@@ -55,6 +56,7 @@ ament_target_dependencies(crazyflie_server
   std_srvs
   crazyflie_interfaces
   crazyswarm_application
+  #motion_capture_tracking_interfaces
 )
 
 # # scan
@@ -105,6 +107,7 @@ install(PROGRAMS
   scripts/crazyflie_server.py
   scripts/chooser.py
   scripts/vel_mux.py
+  scripts/cfmult.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
