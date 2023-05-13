@@ -55,8 +55,8 @@ ament_target_dependencies(crazyflie_server
   sensor_msgs
   std_srvs
   crazyflie_interfaces
-  #motion_capture_tracking_interfaces
   crazyswarm_application
+  #motion_capture_tracking_interfaces
 )
 
 # # scan
