@@ -892,12 +892,12 @@ public:
           constr = con->second.get<std::string>();
         }
         // Find the mocap setting
-        const auto mocap_en = parameter_overrides.find("robot_types." + cf_type + ".motion_capture.enabled");
-        if (mocap_en != parameter_overrides.end()) {
-          if (mocap_en->second.get<bool>()) {
-            mocap_enabled_ = true;
-          }
-        }
+        //const auto mocap_en = parameter_overrides.find("robot_types." + cf_type + ".motion_capture.enabled");
+        //if (mocap_en != parameter_overrides.end()) {
+        //  if (mocap_en->second.get<bool>()) {
+          //  mocap_enabled_ = true;
+          //}
+        //}
 
         // if it is a Crazyflie, try to connect
         if (constr == "crazyflie") {
@@ -1121,7 +1121,7 @@ private:
 
   void posesChanged(const NamedPoseArray::SharedPtr msg)
   {
-    mocap_data_received_timepoints_.emplace_back(std::chrono::steady_clock::now());
+    // mocap_data_received_timepoints_.emplace_back(std::chrono::steady_clock::now());
 
     // Here, we send all the poses to all CFs
     // In Crazyswarm1, we only sent the poses of the same group (i.e. channel)
@@ -1323,11 +1323,11 @@ private:
     std::shared_ptr<rclcpp::ParameterEventCallbackHandle> cb_handle_;
 
     // sanity checks
-    rclcpp::TimerBase::SharedPtr watchdog_timer_;
-    bool mocap_enabled_;
-    float mocap_min_rate_;
-    float mocap_max_rate_;
-    std::vector<std::chrono::time_point<std::chrono::steady_clock>> mocap_data_received_timepoints_;
+    // rclcpp::TimerBase::SharedPtr watchdog_timer_;
+    // bool mocap_enabled_;
+    // float mocap_min_rate_;
+    // float mocap_max_rate_;
+    // std::vector<std::chrono::time_point<std::chrono::steady_clock>> mocap_data_received_timepoints_;
   };
 
 int main(int argc, char *argv[])
