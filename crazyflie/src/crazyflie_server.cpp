@@ -303,7 +303,8 @@ public:
           // check if any of the default topics are enabled
           if (i.first.find("default_topics.pose") == 0) {
             int freq = log_config_map["default_topics.pose.frequency"].get<int>();
-            RCLCPP_INFO(logger_, "Logging to /pose and /vel at %d Hz", freq);
+            int batt_freq = log_config_map["default_topics.battery.frequency"].get<int>();
+            RCLCPP_INFO(logger_, "Logging to /pose and /vel at %d Hz /batt %d Hz", freq, batt_freq);
 
             publisher_pose_ = node->create_publisher<geometry_msgs::msg::PoseStamped>(name + "/pose", 10);
             publisher_vel_ = node->create_publisher<geometry_msgs::msg::Point>(name + "/vel", 10);
@@ -335,7 +336,7 @@ public:
 
             log_block_pose_->start(uint8_t(100.0f / (float)freq)); // this is in tens of milliseconds
             log_block_vel_->start(uint8_t(100.0f / (float)freq)); // this is in tens of milliseconds
-            log_block_batt_->start(uint8_t(100.0f / (float)freq/2.0)); // this is in tens of milliseconds
+            log_block_batt_->start(uint8_t(100.0f / (float)batt_freq)); // this is in tens of milliseconds
           }
           else if (i.first.find("default_topics.scan") == 0) {
             int freq = log_config_map["default_topics.scan.frequency"].get<int>();
@@ -866,7 +867,7 @@ public:
     sensor_data_qos.keep_last(1);
     sensor_data_qos.deadline(rclcpp::Duration(0/*s*/, 1e9/poses_qos_deadline /*ns*/));
     sub_poses_ = this->create_subscription<NamedPoseArray>(
-        "poses", sensor_data_qos, std::bind(&CrazyflieServer::posesChanged, this, _1));
+        "poses", 1, std::bind(&CrazyflieServer::posesChanged, this, _1));
 
     // support for all.params
 
