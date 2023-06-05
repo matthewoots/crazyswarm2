@@ -80,11 +80,12 @@ class CrazyflieServer(Node):
 
         # initialize visualizations by dynamically loading the modules
         self.visualizations = []
-        for vis_name in self._ros_parameters["sim"]["visualizations"]:
-            module = importlib.import_module(".visualization." + vis_name, package="crazyflie_sim")
-            class_ = getattr(module, "Visualization")
-            vis = class_(self, names, initial_states)
-            self.visualizations.append(vis)
+        for vis_key in self._ros_parameters["sim"]["visualizations"]:
+            if self._ros_parameters["sim"]["visualizations"][vis_key]["enabled"]:
+                module = importlib.import_module(".visualization." + str(vis_key), package="crazyflie_sim")
+                class_ = getattr(module, "Visualization")
+                vis = class_(self, self._ros_parameters["sim"]["visualizations"][vis_key], names, initial_states)
+                self.visualizations.append(vis)
 
         controller_name = backend_name = self._ros_parameters["sim"]["controller"]
 
@@ -233,7 +234,7 @@ class CrazyflieServer(Node):
 
     def _param_to_dict(self, param_ros):
         """
-        Turn ROS2 parameters from the node into a dict
+        Turn ROS 2 parameters from the node into a dict
         """
         tree = {}
         for item in param_ros:

@@ -13,12 +13,14 @@ import numpy as np
 # from tf import TransformListener
 # from .visualizer import visNull
 
+from collections import defaultdict
+
 import rclpy
 import rclpy.node
 import rowan
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Point, Twist
-from rcl_interfaces.srv import GetParameters, SetParameters, ListParameters, GetParameterTypes
+from rcl_interfaces.srv import GetParameters, SetParameters, ListParameters, DescribeParameters
 from rcl_interfaces.msg import Parameter, ParameterValue, ParameterType
 from crazyflie_interfaces.srv import Takeoff, Land, GoTo, UploadTrajectory, StartTrajectory, NotifySetpointsStop
 from crazyflie_interfaces.msg import TrajectoryPolynomialPiece, FullState, Position
@@ -63,7 +65,7 @@ class TimeHelper:
 
     def sleepForRate(self, rateHz):
         """Sleeps so that, if called in a loop, executes at specified rate."""
-        # Note: The following ROS2 construct cannot easily be used, because in ROS2
+        # Note: The following ROS 2 construct cannot easily be used, because in ROS 2
         #       there is no implicit threading anymore. Thus, the rosRate.sleep() call
         #       is blocking. Instead, we simulate the rate behavior ourselves.
         # if self.rosRate is None or self.rateHz != rateHz:
@@ -88,7 +90,7 @@ class Crazyflie:
     The bulk of the module's functionality is contained in this class.
     """
 
-    def __init__(self, node, cfname):
+    def __init__(self, node, cfname, paramTypeDict):
         """Constructor.
 
         Args:
@@ -102,6 +104,8 @@ class Crazyflie:
 
         # rospy.wait_for_service(prefix + "/set_group_mask")
         # self.setGroupMaskService = rospy.ServiceProxy(prefix + "/set_group_mask", SetGroupMask)
+        self.emergencyService = node.create_client(Empty, prefix + "/emergency")
+        self.emergencyService.wait_for_service()
         self.takeoffService = node.create_client(Takeoff, prefix + "/takeoff")
         self.takeoffService.wait_for_service()
         self.landService = node.create_client(Land, prefix + "/land")
@@ -125,7 +129,6 @@ class Crazyflie:
         req = GetParameters.Request()
         req.names = ["robots.{}.initial_position".format(cfname), "robots.{}.uri".format(cfname)]
         future = getParamsService.call_async(req)
-        params = []
         while rclpy.ok():
             rclpy.spin_once(node)
             if future.done():
@@ -143,43 +146,7 @@ class Crazyflie:
 
                 break
 
-        # Query all parameters
-        listParamsService = node.create_client(ListParameters, "/crazyflie_server/list_parameters")
-        listParamsService.wait_for_service()
-        req = ListParameters.Request()
-        req.depth = ListParameters.Request.DEPTH_RECURSIVE
-        req.prefixes = []
-        future = listParamsService.call_async(req)
-        params = []
-        while rclpy.ok():
-            rclpy.spin_once(node)
-            if future.done():
-                # Filter the parameters that belong to this Crazyflie
-                response = future.result()
-                for p in response.result.names:
-                    param_prefix = "{}/params/".format(prefix[1:])
-                    if p.startswith(param_prefix):
-                        # params.append(p[len(param_prefix):])
-                        params.append(p)
-                break
-
-        # Find the types for the parameters and store them
-        getParamTypesService = node.create_client(GetParameterTypes, "/crazyflie_server/get_parameter_types")
-        getParamTypesService.wait_for_service()
-        req = GetParameterTypes.Request()
-        req.names = params
-        future = getParamTypesService.call_async(req)
-        self.paramTypeDict = dict()
-        while rclpy.ok():
-            rclpy.spin_once(node)
-            if future.done():
-                # Filter the parameters that belong to this Crazyflie
-                response = future.result()
-                for p, t in zip(params, response.types):
-                    self.paramTypeDict[p[len(param_prefix):]] = t
-                break
-
-        # print(params)
+        self.paramTypeDict = paramTypeDict
 
         self.cmdFullStatePublisher = node.create_publisher(FullState, prefix + "/cmd_full_state", 1)
         self.cmdFullStateMsg = FullState()
@@ -261,6 +228,21 @@ class Crazyflie:
     # def disableCollisionAvoidance(self):
     #     """Disables onboard collision avoidance."""
     #     self.setParam("colAv/enable", 0)
+
+    def emergency(self):
+        """Emergency stop. Cuts power; causes future commands to be ignored.
+
+        This command is useful if the operator determines that the control
+        script is flawed, and that continuing to follow it will cause wrong/
+        self-destructive behavior from the robots. In addition to cutting
+        power to the motors, it ensures that any future commands, both high-
+        level and streaming, will have no effect.
+
+        The only ways to reset the firmware after an emergency stop has occurred
+        are a physical hard reset or an nRF51 Reboot command.
+        """
+        req = Empty.Request()
+        self.emergencyService.call_async(req)
 
     def takeoff(self, targetHeight, duration, groupMask = 0):
         """Execute a takeoff - fly straight up, then hover indefinitely.
@@ -684,6 +666,12 @@ class CrazyflieServer(rclpy.node.Node):
         self.goToService.wait_for_service()
         self.startTrajectoryService = self.create_client(StartTrajectory, "all/start_trajectory")
         self.startTrajectoryService.wait_for_service()
+        self.setParamsService = self.create_client(SetParameters, "/crazyflie_server/set_parameters")
+        self.setParamsService.wait_for_service()
+
+        self.cmdFullStatePublisher = self.create_publisher(FullState, "all/cmd_full_state", 1)
+        self.cmdFullStateMsg = FullState()
+        self.cmdFullStateMsg.header.frame_id = "/world"
 
         cfnames = []
         for srv_name, srv_types in self.get_service_names_and_types():
@@ -693,11 +681,53 @@ class CrazyflieServer(rclpy.node.Node):
                 if cfname != "all":
                     cfnames.append(cfname)
 
+        # Query all parameters
+        listParamsService = self.create_client(ListParameters, "/crazyflie_server/list_parameters")
+        listParamsService.wait_for_service()
+        req = ListParameters.Request()
+        req.depth = ListParameters.Request.DEPTH_RECURSIVE
+        req.prefixes = []
+        future = listParamsService.call_async(req)
+        params = []
+        while rclpy.ok():
+            rclpy.spin_once(self)
+            if future.done():
+                # Filter the parameters that belong to this Crazyflie
+                response = future.result()
+                for p in response.result.names:
+                    if ".params." in p:
+                        params.append(p)
+                break
+
+        # Find the types for the parameters and store them
+        describeParametersService = self.create_client(DescribeParameters, "/crazyflie_server/describe_parameters")
+        describeParametersService.wait_for_service()
+        req = DescribeParameters.Request()
+        req.names = params
+        future = describeParametersService.call_async(req)
+        allParamTypeDicts = defaultdict(dict)
+        while rclpy.ok():
+            rclpy.spin_once(self)
+            if future.done():
+                # Filter the parameters that belong to this Crazyflie
+                response = future.result()
+                for p, d in zip(params, response.descriptors):
+                    idx = p.index(".params.")
+                    cf_name = p[0:idx]
+                    param_name = p[idx+8:]
+                    t = d.type
+                    if cf_name in allParamTypeDicts:
+                        allParamTypeDicts[cf_name][param_name] = t
+                    else:
+                        allParamTypeDicts[cf_name] = {param_name: t}
+                break
+        self.paramTypeDict = allParamTypeDicts["all"]
+
         self.crazyflies = []
         self.crazyfliesById = dict()
         self.crazyfliesByName = dict()
         for cfname in cfnames:
-            cf = Crazyflie(self, cfname)
+            cf = Crazyflie(self, cfname, allParamTypeDicts[cfname])
             self.crazyflies.append(cf)
             self.crazyfliesByName[cfname] = cf
             # For legacy crazyswarm1 code, also provide crazyfliesById
@@ -810,7 +840,57 @@ class CrazyflieServer(rclpy.node.Node):
         req.relative = relative
         self.startTrajectoryService.call_async(req)
 
-    # def setParam(self, name, value):
-    #     """Broadcasted setParam. See Crazyflie.setParam() for details."""
-    #     rospy.set_param("/allcfs/" + name, value)
-    #     self.updateParamsService([name])
+    def setParam(self, name, value):
+        """Broadcasted setParam. See Crazyflie.setParam() for details."""
+        param_name = "all.params." + name
+        param_type = self.paramTypeDict[name]
+        if param_type == ParameterType.PARAMETER_INTEGER:
+            param_value = ParameterValue(type=param_type, integer_value=int(value))
+        elif param_type == ParameterType.PARAMETER_DOUBLE:
+            param_value = ParameterValue(type=param_type, double_value=float(value))
+        req = SetParameters.Request()
+        req.parameters = [Parameter(name=param_name, value=param_value)]
+        self.setParamsService.call_async(req)
+
+    def cmdFullState(self, pos, vel, acc, yaw, omega):
+        """Sends a streaming full-state controller setpoint command.
+
+        The full-state setpoint is most useful for aggressive maneuvers where
+        feedforward inputs for acceleration and angular velocity are critical
+        to obtaining good tracking performance. Full-state setpoints can be
+        obtained from any trajectory parameterization that is at least three
+        times differentiable, e.g. piecewise polynomials.
+
+        Sending a streaming setpoint of any type will force a change from
+        high-level to low-level command mode. Currently, there is no mechanism
+        to change back, but it is a high-priority feature to implement.
+        This means it is not possible to use e.g. :meth:`land()` or
+        :meth:`goTo()` after a streaming setpoint has been sent.
+
+        Args:
+            pos (array-like of float[3]): Position. Meters.
+            vel (array-like of float[3]): Velocity. Meters / second.
+            acc (array-like of float[3]): Acceleration. Meters / second^2.
+            yaw (float): Yaw angle. Radians.
+            omega (array-like of float[3]): Angular velocity in body frame.
+                Radians / sec.
+        """
+        self.cmdFullStateMsg.header.stamp = self.get_clock().now().to_msg()
+        self.cmdFullStateMsg.pose.position.x    = pos[0]
+        self.cmdFullStateMsg.pose.position.y    = pos[1]
+        self.cmdFullStateMsg.pose.position.z    = pos[2]
+        self.cmdFullStateMsg.twist.linear.x     = vel[0]
+        self.cmdFullStateMsg.twist.linear.y     = vel[1]
+        self.cmdFullStateMsg.twist.linear.z     = vel[2]
+        self.cmdFullStateMsg.acc.x              = acc[0]
+        self.cmdFullStateMsg.acc.y              = acc[1]
+        self.cmdFullStateMsg.acc.z              = acc[2]
+        q = rowan.from_euler(0, 0, yaw)
+        self.cmdFullStateMsg.pose.orientation.w = q[0]
+        self.cmdFullStateMsg.pose.orientation.x = q[1]
+        self.cmdFullStateMsg.pose.orientation.y = q[2]
+        self.cmdFullStateMsg.pose.orientation.z = q[3]
+        self.cmdFullStateMsg.twist.angular.x    = omega[0]
+        self.cmdFullStateMsg.twist.angular.y    = omega[1]
+        self.cmdFullStateMsg.twist.angular.z    = omega[2]
+        self.cmdFullStatePublisher.publish(self.cmdFullStateMsg)

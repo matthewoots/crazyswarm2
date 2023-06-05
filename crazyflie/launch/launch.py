@@ -6,6 +6,7 @@ from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
 from launch.conditions import LaunchConfigurationEquals
 from launch.conditions import LaunchConfigurationNotEquals
+from launch.substitutions import LaunchConfiguration, PythonExpression
 
 
 def generate_launch_description():
@@ -58,6 +59,9 @@ def generate_launch_description():
     #                 "dynamics": type["motion_capture"]["dynamics"],
     #             }
 
+    # copy relevent settings to server params
+    server_params[1]["poses_qos_deadline"] = motion_capture_params["topics"]["poses"]["qos"]["deadline"]
+
     # teleop params
     teleop_params = os.path.join(
         get_package_share_directory('crazyflie'),
@@ -66,6 +70,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument('backend', default_value='cpp'),
+        DeclareLaunchArgument('debug', default_value='False'),
         DeclareLaunchArgument('rviz', default_value='show'),
         # Node(
         #     package='motion_capture_tracking',
@@ -108,7 +113,8 @@ def generate_launch_description():
             condition=LaunchConfigurationEquals('backend','cpp'),
             name='crazyflie_server',
             output='screen',
-            parameters=server_params
+            parameters=server_params,
+            prefix=PythonExpression(['"xterm -e gdb -ex run --args" if ', LaunchConfiguration('debug'), ' else ""']),
         ),
         Node(
             package='crazyflie_sim',
